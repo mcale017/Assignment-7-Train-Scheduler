@@ -1,0 +1,22 @@
+.jumbotron {
+    background-color: black;
+    color: white;
+}
+
+#add-train {
+    background-color: black;
+    margin: 20px 0 0 0;
+}
+
+label {
+    margin: 0 0 -20px 0;
+}
+
+th, #tbody {
+    text-align: center;
+}
+
+.delete-button {
+    background-color: black;
+    color: white;
+}
