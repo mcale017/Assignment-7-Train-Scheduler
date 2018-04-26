@@ -1,0 +1,49 @@
+body {
+    background: url(../images/background.jpg);
+    background-position: center bottom;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.jumbotron {
+    background: url(../images/jumbotron.jpg);
+    background-position: center bottom;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: #FE7E03;
+}
+
+#add-train {
+    background-color: #FE7E03;
+    margin: 20px 0 0 0;
+    border-color: #FE7E03;
+}
+
+label {
+    margin: 0 0 -20px 0;
+}
+
+th, #tbody {
+    text-align: center;
+}
+
+.delete-button, .delete-button:hover {
+    background-color: #FE7E03;
+    color: white;
+}
+
+.panel-primary {
+    border-color: #FE7E03;
+    opacity: 0.9;
+}
+
+.panel-primary > .panel-heading {
+    background-color: #FE7E03;
+    border-color: #FE7E03;
+}
+
+.panel-heading > h2 {
+    background-color: #FE7E03;
+}
