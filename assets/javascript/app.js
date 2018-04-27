@@ -2,6 +2,9 @@
 // Employee timesheet on saturday for template and wrote over variables and
 // ID names, etc.
 
+// Initially setting the clock
+$("#clock").html(moment().format('MMMM Do YYYY, HH:mm:ss'));
+
 // When the document is ready
 $(document).ready(function () {
     // Initializing the firebase connection
@@ -126,4 +129,12 @@ $(document).ready(function () {
         var line = $(this())
     })
     */
+
+    // Function to update the clock to its current time
+    function update() {
+        $("#clock").html(moment().format('MMMM Do YYYY, HH:mm:ss'));
+    }
+
+    // Calling the update function every second
+    setInterval(update, 1000);
 })
