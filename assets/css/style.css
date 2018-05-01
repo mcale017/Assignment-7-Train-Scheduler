@@ -29,7 +29,12 @@ th, #tbody {
     text-align: center;
 }
 
-.delete-button, .delete-button:hover {
+.delete-button, .delete-button:hover, .delete-button:active, .delete-button:visited, .delete-button:focus {
+    background-color: #FE7E03;
+    color: white;
+}
+
+.update-button, .update-button:hover, .update-button:active, .update-button:visited, .update-button:focus {
     background-color: #FE7E03;
     color: white;
 }

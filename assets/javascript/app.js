@@ -32,7 +32,18 @@ $(document).ready(function () {
     var minutesUntilTrain = "";
     var nextTrainTime = "";
     var nextTrainTimeFormatted = "";
-    
+    var i = 1;
+
+    // This will retireve the value of 'iteration' from the database
+    function retrieveIteration() {
+        return database.ref().once('value').then(function (snapshot) {
+            i = snapshot.val().iteration;
+        })
+    }
+
+    // Call the retrieveIteration function
+    retrieveIteration();
+
     // When the button with the add-train ID is clicked
     $("#add-train").on("click", function (event) {
         event.preventDefault();
@@ -48,10 +59,10 @@ $(document).ready(function () {
 
         // Storing the current time into the variable
         currentTime = moment();
-        
+
         // Subtracting the current time by the first train time and storing it in minutes
-        differenceTime = moment().diff(moment(trainTimeConverted), "minutes");
-        
+        differenceTime = currentTime.diff(moment(trainTimeConverted), "minutes");
+
         // Getting the remainder of the difference in time divided by the frequency 
         timeRemainder = differenceTime % frequency;
 
@@ -59,13 +70,13 @@ $(document).ready(function () {
         minutesUntilTrain = frequency - timeRemainder;
 
         // Adding those minutes to the current time for the next train time
-        nextTrainTime = moment().add(minutesUntilTrain, "minutes");
+        nextTrainTime = currentTime.add(minutesUntilTrain, "minutes");
 
         // Formatting it in HH:mm
         nextTrainTimeFormatted = moment(nextTrainTime).format("HH:mm");
 
         // Storing all these variables in a temporary train variable
-        var tempTrain = {
+        var train = {
             trainName: trainName,
             destination: destination,
             trainTime: trainTime,
@@ -74,67 +85,142 @@ $(document).ready(function () {
             minutesUntilTrain: minutesUntilTrain
         };
 
-        // Pushing that variable out to firebase
-        database.ref().push(tempTrain);
-
         // Emptying the form
         $("#train-name").val("");
         $("#destination").val("");
         $("#train-time").val("");
         $("#frequency").val("");
+
+        // Pushing the new train object out to the database
+        database.ref().child('trains/' + i).set(train);
+
+        // Increment i
+        i++;
+
+        // Update the value of i in the database
+        database.ref().update({ iteration: i });
     })
 
-    // When the firebase is updated with a child added to it
-    database.ref().on("child_added", function (childSnapshot) {
-        // Creating temporary tr
-        var tempTR = $("<tr>");
+    // When the firebase is updated any time a value changes in the database
+    database.ref().child("trains").on("value", function (snapshot) {
+        // Empty #tbody table every time
+        $("#tbody").empty();
 
-        // Appending all the necessary variables to tr by making it a td first
-        var td1 = $("<td>");
-        td1.text(childSnapshot.val().trainName);
-        tempTR.append(td1);
+        // Pretty much the loop for each train
+        snapshot.forEach(function (childSnapshot) {
+            // Storing the train's number as z so we can use it for the buttons down below
+            var z = Object.keys(snapshot.val())[0];
 
-        var td2 = $("<td>");
-        td2.text(childSnapshot.val().destination);
-        tempTR.append(td2);
+            console.log(z);
 
-        var td3 = $("<td>");
-        td3.text(childSnapshot.val().frequency);
-        tempTR.append(td3);
+            // Creating temporary tr
+            var tempTR = $("<tr>");
 
-        var td4 = $("<td>");
-        td4.text(childSnapshot.val().nextTrainTimeFormatted);
-        tempTR.append(td4);
+            // Appending all the necessary variables to tr by making it a td first
+            var td1 = $("<td>");
+            td1.text(childSnapshot.val().trainName);
+            tempTR.append(td1);
 
-        var td5 = $("<td>");
-        td5.text(childSnapshot.val().minutesUntilTrain);
-        tempTR.append(td5);
+            var td2 = $("<td>");
+            td2.text(childSnapshot.val().destination);
+            tempTR.append(td2);
 
-        // Button that will allow the user to remove a train when clicked on
-        // This will be attempted as an extra feature
-        var td6 = $("<button type=button>");
-        td6.text("X");
-        td6.addClass("btn btn-large delete-button");
-        tempTR.append(td6);
+            var td3 = $("<td>");
+            td3.text(childSnapshot.val().frequency);
+            tempTR.append(td3);
 
-        // Appending the temporary tr to the div with ID tbody
-        $("#tbody").append(tempTR);
+            var td4 = $("<td>");
+            td4.text(childSnapshot.val().nextTrainTimeFormatted);
+            tempTR.append(td4);
+
+            var td5 = $("<td>");
+            td5.text(childSnapshot.val().minutesUntilTrain);
+            tempTR.append(td5);
+
+            // Button that will allow the user to remove a train when clicked on
+            // This will be attempted as an extra feature
+            var td6 = $("<td>");
+            var td6button = $("<button type=button>")
+            td6button.html("<span class='glyphicon glyphicon-remove' aria-hidden='true'></span>")
+            td6button.addClass("btn btn-large delete-button text-center");
+            td6button.attr("data-number", z);
+            td6.append(td6button);
+            tempTR.append(td6);
+
+            var td7 = $("<td>");
+            var td7button = $("<button type=button>");
+            td7button.html("<span class='glyphicon glyphicon-refresh' aria-hidden='true'></span>");
+            td7button.addClass("btn btn-large update-button text-center");
+            td7button.attr("data-number", z);
+            td7.append(td7button);
+            tempTR.append(td7);
+
+            // Appending the temporary tr to the div with ID tbody
+            $("#tbody").append(tempTR);
+
+        });
+
     }, function (errorObject) {
         // Error message
         console.log("Errors handled: " + errorObject.code);
     });
 
-    /*
-    $(".delete-button").on("click", function (event) {
-        var line = $(this())
-    })
-    */
-
     // Function to update the clock to its current time
     function update() {
         $("#clock").html(moment().format('MMMM Do YYYY, HH:mm:ss'));
-    }
+    };
 
     // Calling the update function every second
     setInterval(update, 1000);
+
+    // When the delete button is clicked on, remove the corresponding train from the database
+    $(document).on("click", ".delete-button", function (event) {
+        // Getting the data-number attribute of the button
+        var j = $(this).attr("data-number");
+
+        // Remove the corresponding train
+        database.ref().child("trains/" + j).remove();
+    });
+
+    // When the update button is clicked on, update next arrival & minutes away in firebase
+    $(document).on("click", ".update-button", function (event) {
+        // Getting the data-number attribute of the button
+        var k = $(this).attr("data-number");
+
+        console.log(k);
+
+        // Storing the specific train's path file in database in the variable reference
+        var reference = database.ref().child("trains/" + k);
+
+        reference.once('value').then(function (snapshot) {
+            // Temporarily save the initial train time
+            var tempTrainTime = snapshot.val().trainTime;
+
+            // Temporarily save the frequency
+            var tempFrequency = snapshot.val().frequency;
+
+            // Subtracting 1 day off the first train time so that it's always before the current time
+            var tempTrainTimeConverted = moment(tempTrainTime, "HH:mm").subtract(1, "days");
+
+            // Storing the current time into the variable
+            var tempCurrentTime = moment();
+
+            // Subtracting the current time by the first train time and storing it in minutes
+            var tempDifferenceTime = tempCurrentTime.diff(moment(tempTrainTimeConverted), "minutes");
+
+            // Getting the remainder of the difference in time divided by the frequency 
+            var tempTimeRemainder = tempDifferenceTime % tempFrequency;
+
+            // Subtracting the remainder from the frequency to get minutes until the train arrives
+            var tempMinutesUntilTrain = tempFrequency - tempTimeRemainder;
+
+            // Adding those minutes to the current time for the next train time
+            var tempNextTrainTime = tempCurrentTime.add(tempMinutesUntilTrain, "minutes");
+
+            // Formatting it in HH:mm
+            var tempNextTrainTimeFormatted = moment(tempNextTrainTime).format("HH:mm");
+
+            reference.update({ minutesUntilTrain: tempMinutesUntilTrain, nextTrainTimeFormatted: tempNextTrainTimeFormatted });
+        })
+    })
 })
